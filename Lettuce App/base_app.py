@@ -18,18 +18,22 @@
 
 """
 # Streamlit dependencies
-from datetime import datetime
+from datetime import datetime, date, time
 import streamlit as st
 import joblib,os
+from PIL import Image
+
 
 # Data dependencies
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-
-
+local_css("style.css")
 # The main function where we will build the actual app
 def main():
 	"""Lettuce App with Streamlit """
@@ -41,13 +45,25 @@ def main():
 
 	# Creating sidebar with selection box -
 	# you can create multiple pages this way
-	options = ["Forecasting", "Information", "EDA", "Models"]
+	options = ["Home", "Forecasting", "EDA", "Models"]
 	selection = st.sidebar.selectbox("Choose Option", options)
 
 	# Building out the "Information" page
-	if selection == "Information":
+	if selection == "Home":
 		st.info("General Information")
-		
+		# st.metric(label="Lettuce price today", value="£0.71", delta="£0.2")
+		col1, col2, col3 = st.columns(3)
+		col1.metric(label="Lettuce price yesterday", value="£0.70")
+		col2.metric(label="Lettuce price today", value="£0.72", delta="£0.2")
+		col3.metric(label="Lettuce price tommorow", value="£0.69", delta="-£0.3") 
+
+		st.header("Background")
+		st.markdown("Lettuce (Lactuca sativa) is one of the world's most economically important leafy vegetable crops. It is one of the most popular salad crops and is well-known for its delicate, crispy texture and slightly bitter taste, as well as its fresh condition of milky juice. It is among the most widely grown salad vegetable crop because of its high demand. Lettuce is rich in vitamins as well as minerals such as calcium and iron. It is commonly served alone or with dressing as a salad with tomato, carrot, cucumber, or other salad vegetables. ")
+
+		image = Image.open('resources/imgs/iceberg.png')
+		st.image(image, caption='Iceberg lettuce')
+
+		st.markdown("This app forecasts the price of iceberg lettuce in the UK, using data collected by the Office of National Statistics (ONS). Price forecasting is the prediction of a commodity or product price based on various factors such as its characteristics, demand, seasonal trends, the prices of other commodities, offers from various suppliers, and so on.")
 
 	# Building out the predication page
 	if selection == "Forecasting":
@@ -55,12 +71,16 @@ def main():
 
 	
 		st.markdown("Lettuce is one of the most versatile and valuable crops to grow in a polytunnel in the UK. ")
+		
+		# st.header("Official Date Picker")
+		st.date_input('Pick a date to forecast')
+		# st.date_input('2023')
 		# st.date_input("Select date to forecast", datetime.date(2019, 7, 6))
 		# st.date_input("Select date to forecast", value=datetime.date, min_value=datetime.date, max_value=datetime.date)
 		models = ["Multinomial Naive Bayes", "Support Vector Classifier", "K-nearest neighbours", "Random Forest Classifier","Logistic regression"]
-		seasons = ["Winter", "Autumn", "Summer", "Spring"]
+		# seasons = ["Winter", "Autumn", "Summer", "Spring"]
 		regions = ["London", "South East", "South West", "East Anglia", "East Midlands", "West Midlands", "Yorkshire & Humber", "North West", "North", "Wales", "Scotland", "Northern Ireland"]
-		selection_season = st.selectbox("Select your season", seasons)
+		# selection_season = st.selectbox("Select your season", seasons)
 		selection_region = st.selectbox("Select your region", regions)
 		selection_model = st.selectbox("Select your model", models)
 		
