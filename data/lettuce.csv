@@ -1,4 +1,4 @@
-shop_code,region,price,item,date2,cpi_allitems,cpi_food,Date,Year,Month,Season
+,shop_code,region,price,item,date2,cpi_allitems,cpi_food,Date,Year,Month,Season
 0,1.0,London,0.99,250,01-12-1989,53.4,53.5,1989-12-01,1989,12,Winter
 1,21.0,South East,0.99,250,01-12-1989,53.4,53.5,1989-12-01,1989,12,Winter
 2,32.0,South West,1.0,250,01-12-1989,53.4,53.5,1989-12-01,1989,12,Winter
