@@ -1,1 +1,1 @@
-# Group_6_interns
+# EDSA Internship Group 6
