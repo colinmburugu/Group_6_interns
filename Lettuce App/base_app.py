@@ -22,11 +22,13 @@ from datetime import datetime, date, time
 import streamlit as st
 import joblib,os
 from PIL import Image
-
+import plost # streamlit visualisation
+from st_aggrid import GridOptionsBuilder, AgGrid 
 
 # Data dependencies
 import pandas as pd
 import matplotlib.pyplot as plt
+
 
 
 def local_css(file_name):
@@ -93,6 +95,42 @@ def main():
 	# Building out the EDA page
 	if selection == "EDA":
 		st.info("Exploratory Data Analysis")
+		# Data
+		lettuce = pd.read_csv("./data/lettuce.csv")
+		# st.dataframe(lettuce)
+		# Row C
+		# c1, c2 = st.columns((7,3))
+		# with c1:
+		col1, col2 = st.columns(2)
+		col1.metric(label="Average Iceberg lettuce price", value="£0.72")
+		col2.metric(label="Average Round lettuce price", value="£0.49", delta="-£0.23")
+
+		st.markdown('### Bar chart chart')
+		plost.bar_chart(
+		data=lettuce,
+		bar='region',
+		value= 'price',
+		color ='region',
+		direction='horizontal',
+		legend = None)
+
+		ob = GridOptionsBuilder.from_dataframe(lettuce)
+		ob.configure_column('region', rowGroup=True)
+		ob.configure_column('price', aggFunc='sum')
+		st.markdown('# AgGrid')
+		AgGrid(lettuce, ob.build(), enable_enterprise_modules=True)
+
+		# y='price')
+		# y_unit='day',
+		# color='temp_max',
+		# aggregate='median',
+		# legend=None)
+		# with c2:
+		# st.markdown('### Donut chart')
+		# plost.donut_chart(
+		# 	data=lettuce,
+		# 	theta='price',
+		# 	color='item')
 		
 
 	# Building out the Models page 
