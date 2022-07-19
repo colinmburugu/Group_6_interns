@@ -75,13 +75,16 @@ def main():
 		st.markdown("Lettuce is one of the most versatile and valuable crops to grow in a polytunnel in the UK. ")
 		
 		# st.header("Official Date Picker")
-		st.date_input('Pick a date to forecast')
+		train = pd.read_csv("./data/train.csv")
+		train['date'] = train['date'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d'))
+		dates = list(train['date'])
+		st.date_input('Pick a date to forecast', value=dates)
 		# st.date_input('2023')
 		# st.date_input("Select date to forecast", datetime.date(2019, 7, 6))
 		# st.date_input("Select date to forecast", value=datetime.date, min_value=datetime.date, max_value=datetime.date)
-		models = ["Multinomial Naive Bayes", "Support Vector Classifier", "K-nearest neighbours", "Random Forest Classifier","Logistic regression"]
+		models = ["Vector Auto Regression","Facebook Prophet"]
 		# seasons = ["Winter", "Autumn", "Summer", "Spring"]
-		regions = ["London", "South East", "South West", "East Anglia", "East Midlands", "West Midlands", "Yorkshire & Humber", "North West", "North", "Wales", "Scotland", "Northern Ireland"]
+		regions = ["London", "South East", "South West", "East Anglia", "East Midlands", "Yorkshire & Humber", "North West", "Scotland"]
 		# selection_season = st.selectbox("Select your season", seasons)
 		selection_region = st.selectbox("Select your region", regions)
 		selection_model = st.selectbox("Select your model", models)
@@ -96,7 +99,9 @@ def main():
 	if selection == "EDA":
 		st.info("Exploratory Data Analysis")
 		# Data
-		lettuce = pd.read_csv("./data/lettuce.csv")
+		train = pd.read_csv("./data/train.csv")
+		train['date'] = train['date'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d'))
+		train = train.set_index('date')
 		# st.dataframe(lettuce)
 		# Row C
 		# c1, c2 = st.columns((7,3))
@@ -105,20 +110,55 @@ def main():
 		col1.metric(label="Average Iceberg lettuce price", value="£0.72")
 		col2.metric(label="Average Round lettuce price", value="£0.49", delta="-£0.23")
 
-		st.markdown('### Bar chart chart')
-		plost.bar_chart(
-		data=lettuce,
-		bar='region',
-		value= 'price',
-		color ='region',
-		direction='horizontal',
-		legend = None)
+		regions = ["All regions","London", "South East", "South West", "East Anglia", "East Midlands", "Yorkshire & Humber", "North West", "Scotland"]
+		selection_region = st.selectbox("Select your region", regions)
+		if selection_region == "All regions":
+			fig, axes = plt.subplots(nrows=4, ncols=2, dpi=120, figsize=(10,6))
+			for i, ax in enumerate(axes.flatten()):
+				data = train[train.columns[i]]
+				ax.plot(data, color='red', linewidth=1)
+				# Decorations
+				ax.set_title(train.columns[i])
+				ax.xaxis.set_ticks_position('none')
+				ax.yaxis.set_ticks_position('none')
+				ax.spines["top"].set_alpha(0)
+				ax.tick_params(labelsize=6)
+			plt.set_loglevel('WARNING') 
+			plt.tight_layout()
+			st.pyplot(fig)
+		if selection_region == "London":	
+			st.line_chart(train['London'])
+		if selection_region == "South East":	
+			st.line_chart(train['South East'])
+		if selection_region == "South West":	
+			st.line_chart(train['South West'])	
+		if selection_region == "East Anglia":	
+			st.line_chart(train['East Anglia'])
+		if selection_region == "East Midlands":	
+			st.line_chart(train['East Midlands'])
+		if selection_region == "Yorkshire & Humber":	
+			st.line_chart(train['Yorkshire & Humber'])
+		if selection_region == "North West":	
+			st.line_chart(train['North West'])
+		if selection_region == "Scotland":	
+			st.line_chart(train['Scotland'])
+		
+		
+		# st.markdown('### Bar chart chart')
+		# st.line_chart(train)
+		# plost.bar_chart(
+		# data=train,
+		# bar='region',
+		# value= 'price',
+		# color ='region',
+		# direction='horizontal',
+		# legend = None)
 
-		ob = GridOptionsBuilder.from_dataframe(lettuce)
-		ob.configure_column('region', rowGroup=True)
-		ob.configure_column('price', aggFunc='sum')
-		st.markdown('# AgGrid')
-		AgGrid(lettuce, ob.build(), enable_enterprise_modules=True)
+		# ob = GridOptionsBuilder.from_dataframe(train)
+		# ob.configure_column('region', rowGroup=True)
+		# ob.configure_column('price', aggFunc='sum')
+		# st.markdown('# AgGrid')
+		# AgGrid(train, ob.build(), enable_enterprise_modules=True)
 
 		# y='price')
 		# y_unit='day',
@@ -136,23 +176,26 @@ def main():
 	# Building out the Models page 
 	if selection == "Models":
 		st.subheader("Models used")
-		models = ["Multinomial Naive Bayes", "Support Vector Classifier", "K-nearest neighbours", "Random Forest Classifier","Logistic regression"]
+		models = ["Vector Autoregression","Facebook Prophet"]
 		selection_model = st.selectbox("Select your model", models)
-		if selection_model == "Support Vector Classifier":
-			st.info("Support Vector Classifier")
-			st.markdown("SVM offers very high accuracy compared to other classifiers such as logistic regression, and decision trees. It is known for its kernel trick to handle nonlinear input spaces")
-		if selection_model == "Multinomial Naive Bayes":
-			st.info("Multinomial Naive Bayes")
+		if selection_model == "Vector Autoregression":
+			st.info("Vector Autoregression")
+			st.markdown("Vector Autoregression (VAR) is a multivariate forecasting algorithm that is used when two or more time series influence each other.\n\n"
+			              "That means, the basic requirements in order to use VAR are:\n\n"
+
+							"\t 1. You need at least two time series (variables)\n"
+							"\t2. The time series should influence each other.\n"
+							"###### Alright. So why is it called ‘Autoregressive’?\n\n"
+
+							"It is considered as an Autoregressive model because, each variable (Time Series) is modeled as a function of the past values, that is the predictors are nothing but the lags (time delayed value) of the series.\n\n"
+
+							"###### Ok, so how is VAR different from other Autoregressive models like AR, ARMA or ARIMA?\n\n"
+
+							"The primary difference is those models are uni-directional, where, the predictors influence the Y and not vice-versa. Whereas, Vector Auto Regression (VAR) is bi-directional. That is, the variables influence each other.")
+		if selection_model == "Facebook Prophet":
+			st.info("Facebook Prophet")
 			st.markdown("The Multinomial Naive Bayes algorithm is a Bayesian learning approach popular in Natural Language Processing (NLP). The program guesses the tag of a text, such as an email or a newspaper story, using the Bayes theorem. It calculates each tag's likelihood for a given sample and outputs the tag with the greatest chance ")
-		if selection_model == "Random Forest Classifier":
-			st.info("Random Forest Classifier")
-			st.markdown("Random forests is a supervised learning algorithm. It can be used both for classification and regression. It is also the most flexible and easy to use algorithm. A forest is comprised of trees. It is said that the more trees it has, the more robust a forest is. Random forests creates decision trees on randomly selected data samples, gets prediction from each tree and selects the best solution by means of voting.")
-		if selection_model == "Logistic regression":
-			st.info("Logistic regressionr")
-			st.markdown("Logistic Regression is one of the most simple and commonly used Machine Learning algorithms.It is easy to implement and can be used as the baseline for any binary classification problem. Its basic fundamental concepts are also constructive in deep learning.")
-		if selection_model == "K-nearest neighbours":
-			st.info("K-nearest neighbours")
-			st.markdown("The principle behind nearest neighbor methods is to find a predefined number of training samples closest in distance to the new point, and predict the label from these. ")
+		
 
 # Required to let Streamlit instantiate our web app.  
 if __name__ == '__main__':
