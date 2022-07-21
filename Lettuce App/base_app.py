@@ -28,9 +28,12 @@ from st_aggrid import GridOptionsBuilder, AgGrid
 # Data dependencies
 import pandas as pd
 import matplotlib.pyplot as plt
+from statsmodels.tsa.api import VAR
 
-
-
+VectorAutoregression = open("resources/VAR.pkl","rb")
+train = pd.read_csv("./data/train.csv")
+train['date'] = train['date'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d'))
+train = train.set_index('date')
 def local_css(file_name):
     with open(file_name) as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
@@ -71,14 +74,52 @@ def main():
 	if selection == "Forecasting":
 		st.info("Forecasting price with ML Models")
 
+		df_differenced = train.diff().dropna()
+		model = VAR(df_differenced)
+		model_fitted = model.fit(7)
+		lag_order = model_fitted.k_ar
+		# st.write(lag_order)
+		forecast_input = df_differenced.values[-lag_order:]
+		
+		# forecast_input = df_differenced.values[-7:]
+		# st.write(forecast_input)
+
+		fc = model_fitted.forecast(y=forecast_input, steps=49)
+		df_forecast = pd.DataFrame(fc, index=pd.date_range(start='2018-09-01',end='2022-09-01',freq = 'MS'), columns=train.columns + '_1d')
+		# df_forecast = pd.DataFrame(fc, index=df_ts.index[-nobs:], columns=df_ts.columns + '_1d')
+		# st.write(df_forecast) 
+
+		def invert_transformation(df_train, df_forecast, second_diff=False):
+			"""Revert back the differencing to get the forecast to original scale."""
+			df_fc = df_forecast.copy()
+			columns = df_train.columns
+			for col in columns:        
+				# Roll back 2nd Diff
+				if second_diff:
+					df_fc[str(col)+'_1d'] = (df_train[col].iloc[-1]-df_train[col].iloc[-2]) + df_fc[str(col)+'_2d'].cumsum()
+				# Roll back 1st Diff
+				else:
+					df_fc[str(col)+'_forecast'] = df_train[col].iloc[-1] + df_fc[str(col)+'_1d'].cumsum()
+			return df_fc
+
+		df_results = invert_transformation(train, df_forecast, second_diff=False)
+		df_results = df_results.loc[:, ['London_forecast', 'South East_forecast', 'East Anglia_forecast', 'East Midlands_forecast',
+                   'Yorkshire & Humber_forecast', 'Scotland_forecast', 'North West_forecast', 'South West_forecast',
+                 'West Midlands_forecast' ]]
+		# st.write(df_results)
+
 	
-		st.markdown("Lettuce is one of the most versatile and valuable crops to grow in a polytunnel in the UK. ")
+		# st.markdown("Lettuce is one of the most versatile and valuable crops to grow in a polytunnel in the UK. ")
 		
 		# st.header("Official Date Picker")
-		train = pd.read_csv("./data/train.csv")
-		train['date'] = train['date'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d'))
-		dates = list(train['date'])
-		st.date_input('Pick a date to forecast', value=dates)
+		# train = pd.read_csv("./data/train.csv")
+		# train['date'] = train['date'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d'))
+		# dates = list(train['date'])
+
+		d = st.date_input('Pick a date to forecast')
+		# df_results.index = pd.datetime(df_results.index)
+		# st.write(df_results)
+		# start = d
 		# st.date_input('2023')
 		# st.date_input("Select date to forecast", datetime.date(2019, 7, 6))
 		# st.date_input("Select date to forecast", value=datetime.date, min_value=datetime.date, max_value=datetime.date)
@@ -91,19 +132,19 @@ def main():
 		
 
 		if st.button("Forecast"):
-		
-			st.success("The price for Lettuce is: £0.71")
+			# if d == df_results.index:
+			price = df_results.loc[d:,selection_region+"_forecast"]	
+
+			st.success("The price for Lettuce on " + str(d) + " is £"+str(price))
 	
 
 	# Building out the EDA page
 	if selection == "EDA":
 		st.info("Exploratory Data Analysis")
 		# Data
-		train = pd.read_csv("./data/train.csv")
-		train['date'] = train['date'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d'))
-		train = train.set_index('date')
+		
 		# st.dataframe(lettuce)
-		# Row C
+		# Row C	
 		# c1, c2 = st.columns((7,3))
 		# with c1:
 		col1, col2 = st.columns(2)
